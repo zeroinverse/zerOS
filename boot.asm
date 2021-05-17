@@ -1,9 +1,20 @@
-org 0x7c00
+org 0
 bits 16
 
+jmp 0x7c0:start
+
 start:
+    cli ; clear interrupts
+    mov ax, 0x7c0
+    mov ds, ax
+    mov es, ax
+    mov ax, 0x00
+    mov ss, ax
+    mov sp, 0x7c00
+    sti ; enable interrupts
     mov si, string
     call print
+    jmp $
 
 print:
     mov bx, 0; used for forground and background color
