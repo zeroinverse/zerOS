@@ -1,9 +1,16 @@
 org 0
 bits 16
+; https://wiki.osdev.org/FAT#BPB_.28BIOS_Parameter_Block.29
+_start:
+    jmp short start
+    nop
 
-jmp 0x7c0:start
+times 33 db 0
 
 start:
+    jmp 0x7c0:step2
+
+step2:
     cli ; clear interrupts
     mov ax, 0x7c0
     mov ds, ax
@@ -12,6 +19,7 @@ start:
     mov ss, ax
     mov sp, 0x7c00
     sti ; enable interrupts
+    
     mov si, string
     call print
     jmp $
