@@ -10,21 +10,6 @@ times 33 db 0
 start:
     jmp 0x7c0:step2
 
-; https://wiki.osdev.org/Exceptions
-handle_zero:
-    mov ah, 0eh
-    mov al, '0'
-    mov bx, 0x00
-    int 0x10 ; print Z in case this routine is called
-    iret
-
-handle_one:
-    mov ah, 0eh
-    mov al, '1'
-    mov bx, 0x00
-    int 0x10
-    iret
-
 step2:
     cli ; clear interrupts
     mov ax, 0x7c0
@@ -34,20 +19,23 @@ step2:
     mov ss, ax
     mov sp, 0x7c00
     sti ; enable interrupts
-    
-    ; provide custom routine for INT 0 exception
-    mov word[ss:0x00], handle_zero
-    mov word[ss:0x02], 0x7c0
-    mov ax, 0x00
-    div ax ; divide by zero calls INT 0 exception
-
-    mov word[ss:0x04], handle_one
-    mov word[ss:0x06], 0x7c0
-    ; call exception 
-    int 1
-    
-    mov si, string
+    ; read data from hard disk using Cylinder-head-sector
+    mov ah, 2 ; read sector command
+    mov al, 1 ; read one sector
+    mov ch, 0 ; low eight bits of cylinder number
+    mov cl, 2 ; read sector 2
+    mov dh, 0 ; head number
+    ; drive number is set by default (bit 7 set for hard disk)
+    mov bx, buffer ; write read data to buffer
+    int 0x13
+    jc error
+    mov si, buffer
     call print
+    jmp $
+
+error:
+    mov si, err_message
+    call print_char
     jmp $
 
 print:
@@ -66,7 +54,9 @@ print_char:
     int 0x10
     ret
 
-string: db 'Hello World!', 0
+err_message: db 'failed to load sector', 0
 
 times 510 - ($ - $$) db 0
-dw 0xAA55; bootloader signature is 0x55aa, written in little endian because Intel
+dw 0xAA55; bootloader signature is 0x55aa, written in little endian because Intel 
+; buffer points to after first sector
+buffer; dummmy variable so that the disk read does not override anything
