@@ -1,1 +1,1 @@
-I have to append this message after bootloader!
+we append this message to the hard disk boot sector to read it later.
